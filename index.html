@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PSO Visual Guide — Particle Swarm Optimization</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/pso-site.css">
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════════════════
+       STICKY NAV
+  ═══════════════════════════════════════════════════════ -->
+  <nav class="site-nav" id="siteNav">
+    <div class="nav-brand">
+      <span class="nav-bird">🐦</span>
+      <span>PSO Visual Guide</span>
+    </div>
+    <div class="nav-links">
+      <a href="#hero"       class="nav-link active" data-section="hero">Home</a>
+      <a href="#concept"    class="nav-link"         data-section="concept">01 Concept</a>
+      <a href="#equation"   class="nav-link"         data-section="equation">02 Equation</a>
+      <a href="#algorithm"  class="nav-link"         data-section="algorithm">03 Algorithm</a>
+      <a href="#visualizer" class="nav-link"         data-section="visualizer">04 Playground</a>
+      <a href="#quiz"       class="nav-link"         data-section="quiz">05 Quiz</a>
+    </div>
+    <div class="nav-hamburger" id="navHamburger">☰</div>
+  </nav>
+
+  <!-- ═══════════════════════════════════════════════════════
+       HERO SECTION
+  ═══════════════════════════════════════════════════════ -->
+  <section class="hero" id="hero">
+    <canvas id="heroCanvas"></canvas>
+
+    <div class="hero-content">
+      <div class="hero-badge">🐦 Swarm Intelligence · Kennedy &amp; Eberhart, 1995</div>
+      <h1 class="hero-title">
+        Particle Swarm<br>
+        <span class="hero-accent">Optimization</span>
+      </h1>
+      <p class="hero-subtitle">
+        How 30 simple birds — with nothing but momentum, a memory, and a friend —
+        find the needle in a billion-dimensional haystack.
+      </p>
+      <div class="hero-badges">
+        <span class="hbadge">🚫 No Gradient Needed</span>
+        <span class="hbadge">🌐 Any Search Space</span>
+        <span class="hbadge">⚡ Massively Parallel</span>
+      </div>
+      <div class="hero-stats">
+        <div class="hstat"><span id="heroParticles">0</span><small>particles</small></div>
+        <div class="hstat"><span id="heroIter">0</span><small>iterations</small></div>
+        <div class="hstat"><span id="heroGbest">∞</span><small>global best</small></div>
+      </div>
+      <a href="#concept" class="hero-cta">Start Learning ↓</a>
+    </div>
+
+    <div class="hero-scroll-hint">Move your cursor — the swarm hunts it</div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════
+       01 · CONCEPT
+  ═══════════════════════════════════════════════════════ -->
+  <section class="site-section" id="concept">
+    <div class="section-inner">
+      <div class="section-tag">01 · The Concept</div>
+      <h2 class="section-h2">The Wisdom of the Flock</h2>
+      <p class="section-lead">
+        In 1995, Kennedy &amp; Eberhart simulated how bird flocks forage for food.
+        No bird knows where the food is. No bird can see the entire field. Yet by following
+        three simple rules, the flock reliably finds the best spot — a stunning emergent property.
+      </p>
+
+      <!-- analogy strip -->
+      <div class="analogy-strip">
+        <div class="analogy-row">
+          <div class="analogy-icon">🐦</div>
+          <div class="analogy-equals">→</div>
+          <div class="analogy-label"><strong>Particle</strong><br><small>candidate solution</small></div>
+        </div>
+        <div class="analogy-row">
+          <div class="analogy-icon">🌾</div>
+          <div class="analogy-equals">→</div>
+          <div class="analogy-label"><strong>Food (smell strength)</strong><br><small>fitness f(x)</small></div>
+        </div>
+        <div class="analogy-row">
+          <div class="analogy-icon">🗺️</div>
+          <div class="analogy-equals">→</div>
+          <div class="analogy-label"><strong>Field</strong><br><small>search space ℝⁿ</small></div>
+        </div>
+        <div class="analogy-row">
+          <div class="analogy-icon">🏆</div>
+          <div class="analogy-equals">→</div>
+          <div class="analogy-label"><strong>Best bird</strong><br><small>gbest — global leader</small></div>
+        </div>
+      </div>
+
+      <!-- 3 concept cards -->
+      <div class="concept-grid">
+        <div class="concept-card fade-in">
+          <div class="cc-icon inertia-icon">
+            <svg viewBox="0 0 60 60" width="48" height="48">
+              <circle cx="30" cy="30" r="10" fill="none" stroke="#ff7043" stroke-width="2"/>
+              <line x1="30" y1="30" x2="52" y2="30" stroke="#ff7043" stroke-width="2.5" stroke-linecap="round"/>
+              <polygon points="52,26 60,30 52,34" fill="#ff7043"/>
+              <line x1="8" y1="20" x2="22" y2="30" stroke="#ff7043" stroke-width="1.5" stroke-dasharray="3,2" opacity="0.5"/>
+            </svg>
+          </div>
+          <div class="cc-num">Rule 1</div>
+          <h3>Momentum (Inertia)</h3>
+          <p>
+            Birds carry their velocity forward. They don't stop and pivot instantly — 
+            inertia keeps them sweeping into new regions. High inertia = exploration; 
+            low inertia = fine-grained local search.
+          </p>
+          <div class="cc-formula">
+            <span class="f-blue">w · v<sub>t</sub></span>
+          </div>
+          <div class="cc-param-tip">
+            <strong>w</strong> = inertia weight &nbsp;|&nbsp; Typical: 0.4 – 0.9
+          </div>
+        </div>
+
+        <div class="concept-card fade-in" style="animation-delay:0.15s">
+          <div class="cc-icon cognitive-icon">
+            <svg viewBox="0 0 60 60" width="48" height="48">
+              <circle cx="20" cy="40" r="6" fill="none" stroke="#42a5f5" stroke-width="2"/>
+              <circle cx="45" cy="20" r="6" fill="#42a5f5" opacity="0.3" stroke="#42a5f5" stroke-width="2"/>
+              <line x1="20" y1="40" x2="45" y2="20" stroke="#42a5f5" stroke-width="2" stroke-dasharray="4,2"/>
+              <text x="47" y="17" font-size="10" fill="#42a5f5">pbest</text>
+            </svg>
+          </div>
+          <div class="cc-num">Rule 2</div>
+          <h3>Personal Memory (Cognitive)</h3>
+          <p>
+            Each bird remembers the best spot it personally ever visited. 
+            A spring-like force pulls it back toward that remembered location, 
+            so promising personal discoveries aren't lost to social pressure.
+          </p>
+          <div class="cc-formula">
+            <span class="f-green">c₁ · r₁ · (p<sub>best</sub> − x)</span>
+          </div>
+          <div class="cc-param-tip">
+            <strong>c₁</strong> = cognitive coeff &nbsp;|&nbsp; Typical: 1.5 – 2.0
+          </div>
+        </div>
+
+        <div class="concept-card fade-in" style="animation-delay:0.3s">
+          <div class="cc-icon social-icon">
+            <svg viewBox="0 0 60 60" width="48" height="48">
+              <circle cx="15" cy="45" r="5" fill="#ab47bc" opacity="0.7" stroke="#ab47bc" stroke-width="1.5"/>
+              <circle cx="45" cy="45" r="5" fill="#ab47bc" opacity="0.7" stroke="#ab47bc" stroke-width="1.5"/>
+              <circle cx="30" cy="15" r="8" fill="none" stroke="#ab47bc" stroke-width="2.5"/>
+              <text x="27" y="19" font-size="9" fill="#ab47bc">g</text>
+              <line x1="15" y1="45" x2="30" y2="22" stroke="#ab47bc" stroke-width="1.5" stroke-dasharray="3,2"/>
+              <line x1="45" y1="45" x2="30" y2="22" stroke="#ab47bc" stroke-width="1.5" stroke-dasharray="3,2"/>
+            </svg>
+          </div>
+          <div class="cc-num">Rule 3</div>
+          <h3>Social Learning (Global Best)</h3>
+          <p>
+            All birds observe each other. Every particle feels a pull toward the single 
+            best position any member of the swarm has ever found — 
+            information propagates instantly through the flock.
+          </p>
+          <div class="cc-formula">
+            <span class="f-purple">c₂ · r₂ · (g<sub>best</sub> − x)</span>
+          </div>
+          <div class="cc-param-tip">
+            <strong>c₂</strong> = social coeff &nbsp;|&nbsp; Typical: 1.5 – 2.0
+          </div>
+        </div>
+      </div>
+
+      <!-- vs gradient descent callout -->
+      <div class="compare-box">
+        <div class="compare-side">
+          <h4>❌ Gradient Descent</h4>
+          <ul>
+            <li>Needs a derivative — function must be differentiable</li>
+            <li>One solution at a time</li>
+            <li>Easily trapped in local minima</li>
+            <li>Sensitive to starting point</li>
+          </ul>
+        </div>
+        <div class="compare-vs">VS</div>
+        <div class="compare-side good">
+          <h4>✅ Particle Swarm Optimization</h4>
+          <ul>
+            <li>Derivative-free — works on any black-box function</li>
+            <li>Entire population explores in parallel</li>
+            <li>Escapes local minima through social diversity</li>
+            <li>Robust to initial conditions</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════
+       02 · EQUATION
+  ═══════════════════════════════════════════════════════ -->
+  <section class="site-section dark-section" id="equation">
+    <div class="section-inner">
+      <div class="section-tag">02 · The Equation</div>
+      <h2 class="section-h2">One Formula Drives the Entire Swarm</h2>
+      <p class="section-lead">
+        Those three rules become three vectors. Each iteration, every particle adds them 
+        to get a new velocity, then moves by that velocity. Hover each term to understand it.
+      </p>
+
+      <!-- equation display -->
+      <div class="eq-display">
+        <div class="eq-row">
+          <span class="eq-lhs">v<sub>t+1</sub> =</span>
+          <span class="eq-term inertia-term" data-tip="inertia">
+            <span class="eq-label">w · v<sub>t</sub></span>
+            <div class="eq-tooltip">
+              <strong>Inertia</strong><br>
+              The particle continues in its current direction. 
+              Large w keeps it exploring; small w makes it converge.
+            </div>
+          </span>
+          <span class="eq-plus">+</span>
+          <span class="eq-term cognitive-term" data-tip="cognitive">
+            <span class="eq-label">c₁ · r₁ · (p<sub>best</sub> − x<sub>t</sub>)</span>
+            <div class="eq-tooltip">
+              <strong>Cognitive "Nostalgia"</strong><br>
+              A spring pulling toward the particle's own best memory.
+              r₁ ∈ [0,1] is drawn randomly each step.
+            </div>
+          </span>
+          <span class="eq-plus">+</span>
+          <span class="eq-term social-term" data-tip="social">
+            <span class="eq-label">c₂ · r₂ · (g<sub>best</sub> − x<sub>t</sub>)</span>
+            <div class="eq-tooltip">
+              <strong>Social "Peer Pressure"</strong><br>
+              A spring toward the best spot found by the entire swarm.
+              This is how one discovery spreads to everyone.
+            </div>
+          </span>
+        </div>
+        <div class="eq-row eq-pos-row">
+          <span class="eq-lhs">x<sub>t+1</sub> =</span>
+          <span class="eq-pos-rhs">x<sub>t</sub> + v<sub>t+1</sub></span>
+          <span class="eq-pos-note">(position update — always last)</span>
+        </div>
+      </div>
+
+      <!-- param legend -->
+      <div class="param-legend">
+        <div class="pl-item">
+          <span class="pl-sym f-blue">w</span>
+          <span class="pl-name">Inertia weight</span>
+          <span class="pl-range">0 – 1.4</span>
+        </div>
+        <div class="pl-item">
+          <span class="pl-sym f-green">c₁</span>
+          <span class="pl-name">Cognitive coefficient</span>
+          <span class="pl-range">0 – 3</span>
+        </div>
+        <div class="pl-item">
+          <span class="pl-sym f-purple">c₂</span>
+          <span class="pl-name">Social coefficient</span>
+          <span class="pl-range">0 – 3</span>
+        </div>
+        <div class="pl-item">
+          <span class="pl-sym">r₁, r₂</span>
+          <span class="pl-name">Uniform random [0, 1]</span>
+          <span class="pl-range">redrawn each step</span>
+        </div>
+        <div class="pl-item">
+          <span class="pl-sym f-green">p<sub>best</sub></span>
+          <span class="pl-name">Particle's personal best position</span>
+          <span class="pl-range">stored per particle</span>
+        </div>
+        <div class="pl-item">
+          <span class="pl-sym f-purple">g<sub>best</sub></span>
+          <span class="pl-name">Global best position (whole swarm)</span>
+          <span class="pl-range">shared &amp; updated each iter</span>
+        </div>
+      </div>
+
+      <!-- live calculation demo -->
+      <div class="live-calc">
+        <h3>🔬 Live Calculation Demo</h3>
+        <p class="live-calc-desc">Drag the sliders — watch the velocity equation compute in real time.</p>
+        <div class="calc-grid">
+          <div class="calc-side">
+            <div class="calc-slider-row">
+              <label>w = <span id="lcW">0.72</span></label>
+              <input type="range" id="lcWSlider" min="0" max="140" value="72">
+            </div>
+            <div class="calc-slider-row">
+              <label>c₁ = <span id="lcC1">1.49</span></label>
+              <input type="range" id="lcC1Slider" min="0" max="300" value="149">
+            </div>
+            <div class="calc-slider-row">
+              <label>c₂ = <span id="lcC2">1.49</span></label>
+              <input type="range" id="lcC2Slider" min="0" max="300" value="149">
+            </div>
+            <div class="calc-slider-row">
+              <label>v (current) = <span id="lcV">1.20</span></label>
+              <input type="range" id="lcVSlider" min="-300" max="300" value="120">
+            </div>
+            <div class="calc-slider-row">
+              <label>x (current) = <span id="lcX">2.00</span></label>
+              <input type="range" id="lcXSlider" min="-500" max="500" value="200">
+            </div>
+            <div class="calc-slider-row">
+              <label>p<sub>best</sub> = <span id="lcPb">-1.00</span></label>
+              <input type="range" id="lcPbSlider" min="-500" max="500" value="-100">
+            </div>
+            <div class="calc-slider-row">
+              <label>g<sub>best</sub> = <span id="lcGb">-3.50</span></label>
+              <input type="range" id="lcGbSlider" min="-500" max="500" value="-350">
+            </div>
+          </div>
+          <div class="calc-output" id="calcOutput">
+            <!-- filled by JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════
+       03 · ALGORITHM FLOWCHART
+  ═══════════════════════════════════════════════════════ -->
+  <section class="site-section" id="algorithm">
+    <div class="section-inner">
+      <div class="section-tag">03 · The Algorithm</div>
+      <h2 class="section-h2">The Loop That Makes the Swarm Think</h2>
+      <p class="section-lead">
+        PSO's pseudocode fits on an index card. Here it is — with every step explained 
+        in plain English.
+      </p>
+
+      <div class="algo-layout-2col">
+        <!-- pseudocode -->
+        <div class="pseudo-box">
+          <div class="pseudo-title">Pseudocode</div>
+          <pre class="pseudo"><span class="kw">minimize</span> f(x)
+
+<span class="cm"># Initialise</span>
+<span class="kw">for</span> each particle <span class="hi">i</span>:
+    x<sub>i</sub> ← random position
+    v<sub>i</sub> ← random small velocity
+    pbest<sub>i</sub> ← x<sub>i</sub>
+
+<span class="cm"># Main loop</span>
+<span class="kw">repeat until</span> stopping criterion:
+    <span class="kw">for</span> each particle <span class="hi">i</span>:
+        f<sub>i</sub> ← <span class="call">f</span>(x<sub>i</sub>)          <span class="cm"># evaluate</span>
+        <span class="kw">if</span> f<sub>i</sub> &lt; f(pbest<sub>i</sub>):
+            pbest<sub>i</sub> ← x<sub>i</sub>   <span class="cm"># memory</span>
+    gbest ← <span class="call">argmin</span> f(pbest<sub>i</sub>)   <span class="cm"># share</span>
+    <span class="kw">for</span> each particle <span class="hi">i</span>:
+        r₁, r₂ ← <span class="call">U</span>(0, 1)
+        v<sub>i</sub> ← <span class="f-blue">w·v<sub>i</sub></span> + <span class="f-green">c₁r₁(pbest<sub>i</sub>−x<sub>i</sub>)</span>
+              + <span class="f-purple">c₂r₂(gbest−x<sub>i</sub>)</span>
+        x<sub>i</sub> ← x<sub>i</sub> + v<sub>i</sub>         <span class="cm"># move</span>
+
+<span class="kw">return</span> gbest</pre>
+        </div>
+
+        <!-- step cards -->
+        <div class="steps-list">
+          <div class="step-item">
+            <div class="step-dot">1</div>
+            <div>
+              <h4>Scatter the Birds</h4>
+              <p>Particles are placed at random positions in the search space. Velocities are small random vectors — nobody has a plan yet.</p>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-dot">2</div>
+            <div>
+              <h4>Probe the Landscape</h4>
+              <p>Evaluate f(xᵢ) for every particle. This is the only time the problem is touched — and usually the most expensive step.</p>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-dot">3</div>
+            <div>
+              <h4>Update Memories</h4>
+              <p>If a particle found a better spot than its personal best, it updates pbestᵢ. Each bird keeps its own track record.</p>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-dot">4</div>
+            <div>
+              <h4>Elect the Leader</h4>
+              <p>The best pbest across all particles becomes gbest — instantly known to every particle in the swarm.</p>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-dot">5</div>
+            <div>
+              <h4>Fly! (Update Velocity &amp; Position)</h4>
+              <p>Apply the three-force equation. Add the new velocity to get the next position. The swarm moves. Repeat.</p>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-dot">✓</div>
+            <div>
+              <h4>Stop When Converged</h4>
+              <p>Stopping criteria: max iterations reached, f(gbest) below a threshold, or no improvement for k rounds.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- stopping criteria callout -->
+      <div class="stop-grid">
+        <div class="stop-card">
+          <div class="stop-icon">🔢</div>
+          <strong>Iteration Budget</strong>
+          <span>Fixed maximum (e.g. 100 iterations) — simplest; always terminates.</span>
+        </div>
+        <div class="stop-card">
+          <div class="stop-icon">🎯</div>
+          <strong>Good Enough</strong>
+          <span>f(gbest) drops below a target threshold — stop as soon as quality is sufficient.</span>
+        </div>
+        <div class="stop-card">
+          <div class="stop-icon">📉</div>
+          <strong>Stagnation</strong>
+          <span>gbest hasn't improved for k consecutive iterations — the swarm has converged.</span>
+        </div>
+        <div class="stop-card">
+          <div class="stop-icon">🔵</div>
+          <strong>Collapse</strong>
+          <span>All particles within a tiny radius — population diversity ≈ 0.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════
+       04 · INTERACTIVE VISUALIZER
+  ═══════════════════════════════════════════════════════ -->
+  <section class="site-section dark-section viz-full" id="visualizer">
+    <div class="section-inner wide">
+      <div class="section-tag">04 · Interactive Playground</div>
+      <h2 class="section-h2">Watch the Swarm Solve Real Problems</h2>
+      <p class="section-lead">
+        Choose a benchmark function, tune the parameters, and step through the algorithm — 
+        or just hit Play and watch it converge. Click the canvas to spawn a new particle.
+      </p>
+
+      <div class="algo-layout" id="playground">
+        <!-- ── CANVAS SIDE ── -->
+        <div class="viz-section">
+          <div class="canvas-wrap">
+            <div class="viz-tabs">
+              <button class="viz-tab active" data-tab="contour">🗺 Contour Map</button>
+              <button class="viz-tab" data-tab="convergence">📈 Convergence</button>
+              <button class="viz-tab" data-tab="particles">📋 Particle Table</button>
+            </div>
+            <div class="canvas-hud">
+              <span class="pulse-dot"></span>
+              <span>Click the map to spawn a particle!</span>
+            </div>
+            <canvas id="vizCanvas"></canvas>
+
+            <!-- particle table (hidden by default) -->
+            <div id="particleTableWrap" style="display:none; overflow:auto; max-height:460px;">
+              <table id="particleTable" class="ptable">
+                <thead>
+                  <tr>
+                    <th>#</th><th>x</th><th>y</th><th>vx</th><th>vy</th>
+                    <th>f(x,y)</th><th>pbest f</th>
+                  </tr>
+                </thead>
+                <tbody id="particleTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- explanation strip under canvas -->
+          <div class="explanation-section">
+            <div class="explanation-box" id="explanation">
+              <span class="step-badge">READY</span>
+              <div class="step-title">Welcome to the PSO Playground</div>
+              <div class="step-desc">Configure the parameters on the right, then press ▶ Play or ⏭ Step to begin. Click the canvas to drop an extra particle anywhere.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SIDEBAR ── -->
+        <aside class="sidebar">
+
+          <!-- Function selector -->
+          <div class="panel">
+            <h3><span class="icon">⚙️</span> Objective Function</h3>
+
+            <div class="param-group">
+              <label>Benchmark Preset</label>
+              <select id="funcSelect">
+                <option value="sphere">🔵 Sphere — x² + y²</option>
+                <option value="rastrigin" selected>🌊 Rastrigin — multimodal waves</option>
+                <option value="ackley">🌪 Ackley — steep valley</option>
+                <option value="rosenbrock">🍌 Rosenbrock — banana valley</option>
+                <option value="booth">📍 Booth — (x+2y-7)²+(2x+y-5)²</option>
+                <option value="himmelblau">🏔 Himmelblau — 4 global minima</option>
+                <option value="schwefel">❄️ Schwefel — deceptive traps</option>
+                <option value="custom">✏️ Custom Formula</option>
+              </select>
+            </div>
+
+            <!-- function info card -->
+            <div class="func-info" id="funcInfo"></div>
+
+            <!-- custom formula -->
+            <div class="formula-box" id="customFormulaBox" style="display:none;">
+              <label>f(x, y) = </label>
+              <input type="text" class="formula-input" id="customFormulaInput"
+                     value="x^2 + y^2 - 10*cos(2*pi*x) - 10*cos(2*pi*y)"
+                     placeholder="e.g. sin(x)*cos(y) + x^2/10">
+              <div class="formula-error" id="formulaError"></div>
+              <div class="range-row">
+                <div>
+                  <label>x: [</label>
+                  <input type="number" id="customMinX" value="-5" class="range-input">
+                  <label>, </label>
+                  <input type="number" id="customMaxX" value="5" class="range-input">
+                  <label>]</label>
+                </div>
+                <div>
+                  <label>y: [</label>
+                  <input type="number" id="customMinY" value="-5" class="range-input">
+                  <label>, </label>
+                  <input type="number" id="customMaxY" value="5" class="range-input">
+                  <label>]</label>
+                </div>
+              </div>
+              <button class="ctrl-btn primary" id="applyFormulaBtn" style="width:100%;margin-top:8px;">
+                ✔ Compile &amp; Apply
+              </button>
+            </div>
+
+            <div class="param-group" style="margin-top:10px;">
+              <label>Goal</label>
+              <div class="btn-toggle-group">
+                <button class="btn-toggle active" id="goalMin">▼ Minimize</button>
+                <button class="btn-toggle" id="goalMax">▲ Maximize</button>
+              </div>
+            </div>
+
+            <div class="param-group">
+              <label>Boundary Handling</label>
+              <select id="boundarySelect">
+                <option value="clamp" selected>Clamp to Boundary</option>
+                <option value="bounce">Bounce / Reflect</option>
+                <option value="wrap">Wrap (Torus)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Hyperparameters -->
+          <div class="panel">
+            <h3><span class="icon">🐦</span> Swarm Parameters</h3>
+
+            <div class="param-group">
+              <label>Swarm Size <span class="value" id="swarmSizeVal">20</span></label>
+              <input type="range" id="swarmSize" min="3" max="60" value="20">
+            </div>
+            <div class="param-group">
+              <label>Inertia (w) <span class="value" id="inertiaVal">0.72</span></label>
+              <input type="range" id="inertia" min="0" max="140" value="72">
+            </div>
+            <div class="param-group">
+              <label>Cognitive c₁ <span class="value" id="c1Val">1.49</span></label>
+              <input type="range" id="c1" min="0" max="300" value="149">
+            </div>
+            <div class="param-group">
+              <label>Social c₂ <span class="value" id="c2Val">1.49</span></label>
+              <input type="range" id="c2" min="0" max="300" value="149">
+            </div>
+            <div class="param-group">
+              <label>Max Iterations <span class="value" id="maxIterVal">80</span></label>
+              <input type="range" id="maxIter" min="10" max="200" value="80">
+            </div>
+            <div class="param-group">
+              <label>Speed <span class="value" id="speedVal">5</span>×</label>
+              <input type="range" id="speed" min="1" max="10" value="5">
+            </div>
+
+            <!-- preset buttons -->
+            <div class="preset-row">
+              <button class="preset-btn" data-preset="explore" title="High inertia, balanced social">🗺 Explorer</button>
+              <button class="preset-btn" data-preset="greedy"  title="Low inertia, strong social">🏃 Greedy</button>
+              <button class="preset-btn" data-preset="balanced" title="Clerc-Kennedy constriction">⚖ Balanced</button>
+              <button class="preset-btn" data-preset="loner"   title="No social, pure personal">🧍 Loner</button>
+            </div>
+          </div>
+
+          <!-- Controls -->
+          <div class="panel">
+            <h3><span class="icon">🎮</span> Controls</h3>
+            <div class="controls-row">
+              <button class="ctrl-btn primary" id="playBtn">▶ Play</button>
+              <button class="ctrl-btn" id="pauseBtn">⏸ Pause</button>
+              <button class="ctrl-btn" id="stepBtn">⏭ Step</button>
+              <button class="ctrl-btn danger" id="resetBtn">↺ Reset</button>
+            </div>
+            <div class="progress-bar" style="margin-top:10px;">
+              <div class="fill" id="progressFill" style="width:0%"></div>
+            </div>
+          </div>
+
+          <!-- Stats -->
+          <div class="panel">
+            <h3><span class="icon">📊</span> Live Stats</h3>
+            <div class="stat-row"><span class="stat-label">Iteration</span><span class="stat-value" id="statIteration">0</span></div>
+            <div class="stat-row"><span class="stat-label">Sub-step</span><span class="stat-value" id="statSubstep">—</span></div>
+            <div class="stat-row"><span class="stat-label">Global Best Pos</span><span class="stat-value" id="statGBestPos">(—, —)</span></div>
+            <div class="stat-row"><span class="stat-label">Global Best f</span><span class="stat-value highlight" id="statGBestVal">—</span></div>
+            <div class="stat-row"><span class="stat-label">Avg Fitness</span><span class="stat-value" id="statAvgFit">—</span></div>
+            <div class="stat-row"><span class="stat-label">Avg |Velocity|</span><span class="stat-value" id="statAvgVel">—</span></div>
+            <div class="stat-row"><span class="stat-label">Stagnation</span><span class="stat-value" id="statStagnation">0 iters</span></div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════
+       05 · QUIZ
+  ═══════════════════════════════════════════════════════ -->
+  <section class="site-section" id="quiz">
+    <div class="section-inner">
+      <div class="section-tag">05 · Concept Check</div>
+      <h2 class="section-h2">Test Your PSO Knowledge</h2>
+      <p class="section-lead">
+        Seven quick questions. Select an answer to see instant feedback with an explanation.
+      </p>
+      <div id="quizContainer"></div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════
+       FOOTER
+  ═══════════════════════════════════════════════════════ -->
+  <footer class="site-footer">
+    <div class="footer-brand">🐦 PSO Visual Guide</div>
+    <div class="footer-sub">
+      Built for Soft Computing Lab · Inspired by Kennedy &amp; Eberhart (1995)
+    </div>
+    <div class="footer-links">
+      <a href="#hero">Back to top ↑</a>
+    </div>
+  </footer>
+
+  <script src="js/math-parser.js"></script>
+  <script src="js/quiz.js"></script>
+  <script src="js/pso.js"></script>
+</body>
+</html>
