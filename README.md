@@ -1,3 +1,7 @@
+## DEPLOYED LINK - https://merintheres.github.io/Particle-Swarm-Optimization/
+
+---
+
 # 🐦 PSO Visual Guide
 
 **An interactive, beginner-friendly website for learning Particle Swarm Optimization (PSO)**
