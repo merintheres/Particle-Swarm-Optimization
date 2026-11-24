@@ -494,6 +494,20 @@
         <!-- ── SIDEBAR ── -->
         <aside class="sidebar">
 
+          <!-- Controls -->
+          <div class="panel">
+            <h3><span class="icon">🎮</span> Controls</h3>
+            <div class="controls-row">
+              <button class="ctrl-btn primary" id="playBtn">▶ Play</button>
+              <button class="ctrl-btn" id="pauseBtn">⏸ Pause</button>
+              <button class="ctrl-btn" id="stepBtn">⏭ Step</button>
+              <button class="ctrl-btn danger" id="resetBtn">↺ Reset</button>
+            </div>
+            <div class="progress-bar" style="margin-top:10px;">
+              <div class="fill" id="progressFill" style="width:0%"></div>
+            </div>
+          </div>
+
           <!-- Function selector -->
           <div class="panel">
             <h3><span class="icon">⚙️</span> Objective Function</h3>
@@ -596,20 +610,6 @@
               <button class="preset-btn" data-preset="greedy"  title="Low inertia, strong social">🏃 Greedy</button>
               <button class="preset-btn" data-preset="balanced" title="Clerc-Kennedy constriction">⚖ Balanced</button>
               <button class="preset-btn" data-preset="loner"   title="No social, pure personal">🧍 Loner</button>
-            </div>
-          </div>
-
-          <!-- Controls -->
-          <div class="panel">
-            <h3><span class="icon">🎮</span> Controls</h3>
-            <div class="controls-row">
-              <button class="ctrl-btn primary" id="playBtn">▶ Play</button>
-              <button class="ctrl-btn" id="pauseBtn">⏸ Pause</button>
-              <button class="ctrl-btn" id="stepBtn">⏭ Step</button>
-              <button class="ctrl-btn danger" id="resetBtn">↺ Reset</button>
-            </div>
-            <div class="progress-bar" style="margin-top:10px;">
-              <div class="fill" id="progressFill" style="width:0%"></div>
             </div>
           </div>
 

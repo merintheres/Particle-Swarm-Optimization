@@ -410,6 +410,8 @@ x<sub>new</sub> = x + v = ${vals.x.toFixed(2)} + ${v_new.toFixed(4)}
   };
 
   let W = 0, H = 0, dpr = 1;
+  let heatmapImageCache = null;
+  let heatmapDirty = true;
 
   /* ── Canvas sizing ── */
   function resizeCanvas() {
@@ -425,7 +427,9 @@ x<sub>new</sub> = x + v = ${vals.x.toFixed(2)} + ${v_new.toFixed(4)}
       canvas.height = Math.round(H * dpr);
       heatmapDirty = true;
       heatmapImageCache = null;
-      render();
+      if (state.heatmap) {
+        render();
+      }
     }
   }
   new ResizeObserver(resizeCanvas).observe(canvas);
@@ -541,35 +545,36 @@ x<sub>new</sub> = x + v = ${vals.x.toFixed(2)} + ${v_new.toFixed(4)}
     }
   }
 
-  let heatmapImageCache = null;
-  let heatmapDirty = true;
-
   function drawHeatmap() {
     if (!state.heatmap || W <= 0 || H <= 0) return;
     if (heatmapDirty || !heatmapImageCache) {
       const { grid, mn, mx, steps } = state.heatmap;
       const offscreen = document.createElement('canvas');
-      offscreen.width  = W;
-      offscreen.height = H;
+      const gw = steps + 1, gh = steps + 1;
+      offscreen.width  = gw;
+      offscreen.height = gh;
       const octx = offscreen.getContext('2d');
-      const idata = octx.createImageData(W, H);
+      const idata = octx.createImageData(gw, gh);
       const data  = idata.data;
-      for (let py = 0; py < H; py++) {
-        for (let px = 0; px < W; px++) {
-          const gi = Math.round((px / W) * steps);
-          const gj = Math.round((1 - py / H) * steps);
-          const v  = (grid[gj] || [])[gi] ?? mn;
+      for (let j = 0; j <= steps; j++) {
+        const gj = steps - j; // top row in canvas is highest y value
+        const row = grid[gj] || [];
+        for (let i = 0; i <= steps; i++) {
+          const v   = row[i] ?? mn;
           const eff = state.minimize ? v : (mn + mx - v);
           const [r, g, b] = valToColor(eff, mn, mx);
-          const idx = (py * W + px) * 4;
-          data[idx]   = r; data[idx+1] = g;
-          data[idx+2] = b; data[idx+3] = 230;
+          const idx = (j * gw + i) * 4;
+          data[idx]     = r;
+          data[idx + 1] = g;
+          data[idx + 2] = b;
+          data[idx + 3] = 230;
         }
       }
       octx.putImageData(idata, 0, 0);
       heatmapImageCache = offscreen;
       heatmapDirty = false;
     }
+    ctx.imageSmoothingEnabled = true;
     ctx.drawImage(heatmapImageCache, 0, 0, W, H);
   }
 
@@ -878,11 +883,11 @@ x<sub>new</sub> = x + v = ${vals.x.toFixed(2)} + ${v_new.toFixed(4)}
     }
 
     // axis labels
-    ctx.font = '10px Inter, sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.4)';
-    ctx.textAlign = 'left';   ctx.fillText(`x: ${(state.heatmap?.dlo || -5).toFixed(0)}`, 4, H-4);
-    ctx.textAlign = 'right';  ctx.fillText(`${(state.heatmap?.dhi || 5).toFixed(0)}`, W-4, H-4);
-    ctx.textAlign = 'center'; ctx.fillText(`y: ${(state.heatmap?.yhi || 5).toFixed(0)}`, 10, 14);
-    ctx.fillText(`${(state.heatmap?.ylo || -5).toFixed(0)}`, 10, H-4);
+    ctx.font = '11px Inter, sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.textAlign = 'left';   ctx.fillText(`x: ${(state.heatmap?.dlo ?? -5).toFixed(1)}`, 10, H - 8);
+    ctx.textAlign = 'right';  ctx.fillText(`${(state.heatmap?.dhi ?? 5).toFixed(1)}`, W - 10, H - 8);
+    ctx.textAlign = 'left';   ctx.fillText(`y: ${(state.heatmap?.yhi ?? 5).toFixed(1)}`, 10, 22);
+    ctx.fillText(`y: ${(state.heatmap?.ylo ?? -5).toFixed(1)}`, 10, H - 24);
   }
 
   function drawShockwaves() {
@@ -978,6 +983,7 @@ x<sub>new</sub> = x + v = ${vals.x.toFixed(2)} + ${v_new.toFixed(4)}
   }
   function resetSwarm() {
     stopAnim();
+    if (!W || !H) resizeCanvas();
     if (!setupFunction()) return;
     buildHeatmap();
     heatmapDirty = true;
@@ -1054,19 +1060,50 @@ x<sub>new</sub> = x + v = ${vals.x.toFixed(2)} + ${v_new.toFixed(4)}
 
   /* ── Click-to-spawn ── */
   canvas.addEventListener('click', e => {
-    if (!state.heatmap || state.particles.length === 0) return;
+    if (!state.heatmap) return;
     const rect = canvas.getBoundingClientRect();
     const cx = e.clientX - rect.left;
     const cy = e.clientY - rect.top;
-    const x = canvasToX(cx), y = canvasToY(cy);
+    const x = canvasToX(cx);
+    const y = canvasToY(cy);
     const [dlo, dhi] = state.domain;
     const ylo = state.domainY ? state.domainY[0] : dlo;
     const yhi = state.domainY ? state.domainY[1] : dhi;
     const velScale = (dhi - dlo) * 0.05;
-    state.particles.push({
-      x, y, vx: rnd(-velScale, velScale), vy: rnd(-velScale, velScale),
-      pbx: x, pby: y, pbf: Infinity, trail: [], isGbest: false
-    });
+
+    let fit = Infinity;
+    if (state.fn) {
+      try { fit = state.fn(x, y); } catch(_) { fit = state.minimize ? Infinity : -Infinity; }
+      if (!isFinite(fit)) fit = state.minimize ? 1e9 : -1e9;
+    }
+
+    const newParticle = {
+      x, y,
+      vx: rnd(-velScale, velScale),
+      vy: rnd(-velScale, velScale),
+      pbx: x, pby: y,
+      pbf: fit,
+      f: fit,
+      trail: [{ x, y }],
+      isGbest: false
+    };
+
+    state.particles.push(newParticle);
+
+    const better = (a, b) => state.minimize ? a < b : a > b;
+    if (better(fit, state.gbestF)) {
+      state.gbestF = fit;
+      state.gbest = { x, y };
+      state.particles.forEach(p => p.isGbest = false);
+      newParticle.isGbest = true;
+      state.shockwaves.push({
+        cx: xToCanvas(x),
+        cy: yToCanvas(y),
+        r: 0, maxR: 50, alpha: 0.8
+      });
+    }
+
+    updateUI();
     render();
   });
 
@@ -1085,69 +1122,115 @@ x<sub>new</sub> = x + v = ${vals.x.toFixed(2)} + ${v_new.toFixed(4)}
   const questions = [
     {
       q: 'Which term in the PSO velocity equation represents the particle\'s personal best memory?',
+      options: ['w · vₜ', 'c₁ · r₁ · (pbest − x)', 'c₂ · r₂ · (gbest − x)', 'x + v'],
       opts: ['w · vₜ', 'c₁ · r₁ · (pbest − x)', 'c₂ · r₂ · (gbest − x)', 'x + v'],
+      answer: 1,
       ans: 1,
+      explanation: 'The cognitive term c₁·r₁·(pbest−x) pulls each particle toward its own personal best position — its "memory".',
       exp: 'The cognitive term c₁·r₁·(pbest−x) pulls each particle toward its own personal best position — its "memory".'
     },
     {
       q: 'What happens if inertia weight w is set very close to 0?',
+      options: [
+        'Particles explore more of the search space',
+        'Particles converge quickly but may miss the global optimum',
+        'Particles stop moving entirely',
+        'The algorithm becomes gradient descent'
+      ],
       opts: [
         'Particles explore more of the search space',
         'Particles converge quickly but may miss the global optimum',
         'Particles stop moving entirely',
         'The algorithm becomes gradient descent'
       ],
+      answer: 1,
       ans: 1,
+      explanation: 'Very low w kills momentum, so particles brake hard and exploit their immediate neighbourhood — good for fine-tuning but risky if the swarm hasn\'t found the right region yet.',
       exp: 'Very low w kills momentum, so particles brake hard and exploit their immediate neighbourhood — good for fine-tuning but risky if the swarm hasn\'t found the right region yet.'
     },
     {
       q: 'PSO is called a "gradient-free" method. What does this mean?',
+      options: [
+        'It computes f\'(x) numerically instead of analytically',
+        'It never evaluates the objective function',
+        'It does not need derivatives — just function evaluations f(x)',
+        'It only works on linear functions'
+      ],
       opts: [
         'It computes f\'(x) numerically instead of analytically',
         'It never evaluates the objective function',
         'It does not need derivatives — just function evaluations f(x)',
         'It only works on linear functions'
       ],
+      answer: 2,
       ans: 2,
+      explanation: 'PSO only needs to evaluate f(xᵢ) at each particle\'s current position. No derivative or gradient information is required, making it applicable to non-differentiable or black-box functions.',
       exp: 'PSO only needs to evaluate f(xᵢ) at each particle\'s current position. No derivative or gradient information is required, making it applicable to non-differentiable or black-box functions.'
     },
     {
       q: 'What is "gbest" in the standard PSO formulation?',
+      options: [
+        'The particle with the highest velocity',
+        'The best position ever found by any particle in the swarm',
+        'The centroid of all particle positions',
+        'The particle positioned at the domain centre'
+      ],
       opts: [
         'The particle with the highest velocity',
         'The best position ever found by any particle in the swarm',
         'The centroid of all particle positions',
         'The particle positioned at the domain centre'
       ],
+      answer: 1,
       ans: 1,
+      explanation: 'gbest is the global best — the best position (with best fitness) that any particle in the entire swarm has ever visited. All particles are attracted toward it via the social term.',
       exp: 'gbest is the global best — the best position (with best fitness) that any particle in the entire swarm has ever visited. All particles are attracted toward it via the social term.'
     },
     {
       q: 'The Rastrigin function is used as a benchmark because:',
+      options: [
+        'It has only one minimum and is easy to solve',
+        'It is differentiable everywhere and convex',
+        'It has many local minima arranged in a grid, testing the swarm\'s ability to avoid traps',
+        'It models a realistic engineering cost function'
+      ],
       opts: [
         'It has only one minimum and is easy to solve',
         'It is differentiable everywhere and convex',
         'It has many local minima arranged in a grid, testing the swarm\'s ability to avoid traps',
         'It models a realistic engineering cost function'
       ],
+      answer: 2,
       ans: 2,
+      explanation: 'Rastrigin adds a cosine wave to a sphere function, creating ~100 local minima on a regular grid. It tests whether the swarm can cooperate to skip local traps and converge at the global minimum at the origin.',
       exp: 'Rastrigin adds a cosine wave to a sphere function, creating ~100 local minima on a regular grid. It tests whether the swarm can cooperate to skip local traps and converge at the global minimum at the origin.'
     },
     {
       q: 'Why are r₁ and r₂ drawn randomly at each step?',
+      options: [
+        'To simulate measurement noise in the objective function',
+        'To ensure r₁ + r₂ = 1 always',
+        'To add stochastic diversity so particles don\'t fly rigid straight lines',
+        'They are not random — they are fixed constants'
+      ],
       opts: [
         'To simulate measurement noise in the objective function',
         'To ensure r₁ + r₂ = 1 always',
         'To add stochastic diversity so particles don\'t fly rigid straight lines',
         'They are not random — they are fixed constants'
       ],
+      answer: 2,
       ans: 2,
+      explanation: 'Fresh uniform random values every iteration vary the strength of each pull, preventing particles from following perfectly predictable paths. This diversity helps the swarm explore and avoids premature convergence.',
       exp: 'Fresh uniform random values every iteration vary the strength of each pull, preventing particles from following perfectly predictable paths. This diversity helps the swarm explore and avoids premature convergence.'
     },
     {
       q: 'Which boundary strategy reflects a particle\'s velocity when it hits the edge?',
+      options: ['Clamp', 'Wrap (Torus)', 'Bounce / Reflect', 'Ignore (let it leave)'],
       opts: ['Clamp', 'Wrap (Torus)', 'Bounce / Reflect', 'Ignore (let it leave)'],
+      answer: 2,
       ans: 2,
+      explanation: 'The "Bounce" strategy reverses the velocity component that caused the boundary violation — like a billiard ball. Clamp simply stops the particle at the boundary, and Wrap teleports it to the opposite side.',
       exp: 'The "Bounce" strategy reverses the velocity component that caused the boundary violation — like a billiard ball. Clamp simply stops the particle at the boundary, and Wrap teleports it to the opposite side.'
     }
   ];
@@ -1164,7 +1247,7 @@ x<sub>new</sub> = x + v = ${vals.x.toFixed(2)} + ${v_new.toFixed(4)}
       <div class="quiz-card" id="qcard${qi}">
         <div class="quiz-q">${qi+1}. ${q.q}</div>
         <div class="quiz-options">
-          ${q.opts.map((opt, oi) => `
+          ${q.options.map((opt, oi) => `
             <div class="quiz-option" data-qi="${qi}" data-oi="${oi}">${opt}</div>
           `).join('')}
         </div>
@@ -1182,18 +1265,18 @@ x<sub>new</sub> = x + v = ${vals.x.toFixed(2)} + ${v_new.toFixed(4)}
       card.classList.add('answered');
       answered++;
       const q = questions[qi];
-      const isCorrect = oi === q.ans;
+      const isCorrect = oi === q.answer;
       if (isCorrect) { score++; card.classList.add('correct'); opt.classList.add('correct'); }
       else {
         card.classList.add('wrong');
         opt.classList.add('wrong');
-        card.querySelectorAll('.quiz-option')[q.ans].classList.add('correct');
+        card.querySelectorAll('.quiz-option')[q.answer].classList.add('correct');
       }
       card.querySelectorAll('.quiz-option').forEach(o => o.classList.add('disabled'));
       const fb = document.getElementById(`qfb${qi}`);
       fb.style.display = 'block';
       fb.className = `quiz-feedback ${isCorrect ? 'correct' : 'wrong'}`;
-      fb.textContent = (isCorrect ? '✓ Correct! ' : '✗ Not quite. ') + q.exp;
+      fb.textContent = (isCorrect ? '✓ Correct! ' : '✗ Not quite. ') + q.explanation;
 
       if (answered === questions.length) {
         const scoreEl = document.getElementById('quizScore');
