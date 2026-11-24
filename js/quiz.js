@@ -58,9 +58,9 @@
                   else if (optIdx === state.selected && !state.isCorrect) cls += ' wrong';
                 }
                 return `
-                  <button class="${cls}" data-opt-idx="${optIdx}" ${state !== null ? 'disabled' : ''} style="display:flex; align-items:center; gap:10px; width:100%; text-align:left;">
-                    <span style="font-weight:700; opacity:0.6; font-family:'JetBrains Mono',monospace;">${letters[optIdx]}.</span>
-                    <span>${escapeHtml(opt)}</span>
+                  <button class="${cls}" data-opt-idx="${optIdx}" ${state !== null ? 'disabled' : ''} type="button">
+                    <span style="font-weight:700; opacity:0.75; font-family:'JetBrains Mono',monospace; min-width:24px;">${letters[optIdx]}.</span>
+                    <span style="flex:1;">${escapeHtml(opt)}</span>
                   </button>
                 `;
               }).join('')}
