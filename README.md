@@ -20,7 +20,7 @@ Built for the Soft Computing Lab — inspired by Kennedy & Eberhart (1995).
 ```bash
 # Clone
 git clone https://github.com/your-username/soft-computing.git
-cd soft-computing
+cd Particle-Swarm-Optimization
 ```
 
 ---
@@ -28,7 +28,7 @@ cd soft-computing
 ## 📁 File Structure
 
 ```
-soft-computing/
+Particle-Swarm-Optimization/
 │
 ├── index.html          ← Main single-page PSO website
 │
